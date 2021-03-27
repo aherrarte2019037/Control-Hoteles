@@ -1,10 +1,10 @@
-import passport from 'passport';
+import Passport from 'Passport';
 
 export default class AuthMiddleware {
 
     static registerUser( req, res, next ) {
         if( req.body.role === 'hotel_admin' || req.body.role === 'app_admin' ) {
-            passport.authenticate( 'authorize_user', {session: false}, (error, user, message) =>{
+            Passport.authenticate( 'authorize_user', {session: false}, (error, user, message) =>{
 
                 if(error || !user || user.role === 'client') {
                     return res.status(500).send('Unauthorized');
@@ -26,7 +26,7 @@ export default class AuthMiddleware {
     }
 
     static isLogged( req, res, next ) {
-        passport.authenticate( 'authorize_user', {session: false}, (error, user, message) =>{
+        Passport.authenticate( 'authorize_user', {session: false}, (error, user, message) =>{
 
             if(error || !user ) {
                 res.status(500).send('Unauthorized');
@@ -40,7 +40,7 @@ export default class AuthMiddleware {
     }
 
     static isAppAdmin( req, res, next ) {
-        passport.authenticate( 'authorize_user', {session: false}, (error, user, message) =>{
+        Passport.authenticate( 'authorize_user', {session: false}, (error, user, message) =>{
 
             if(error || !user || user.role !== 'app_admin' ) {
                 res.status(500).send('Unauthorized');

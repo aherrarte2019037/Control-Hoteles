@@ -6,7 +6,7 @@ mongoose.SchemaTypes.Email.defaults.message = 'Email is invalid';
 
 const UserSchema = mongoose.Schema({
     username : { type: String, required: [true, 'Username is required'], minLength: 4, maxLength: 30 },
-    email    : { type: mongoose.SchemaTypes.Email, required: [true, 'Email is required'] },
+    email    : { type: mongoose.SchemaTypes.Email },
     firstname: { type: String, required: [true, 'Firstname is required'], minLength: 2, maxLength: 30 },
     lastname : { type: String, required: [true, 'Lastname is required'], minLength: 2, maxLength: 30 },
     role     : { type: String, enum: ['client', 'hotel_admin', 'app_admin'], default: 'client' },

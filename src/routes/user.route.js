@@ -1,6 +1,6 @@
 import express from 'express';
 import UserController from '../controllers/user.controller.js';
-import passport from 'passport';
+import Passport from 'Passport';
 import AuthMiddleware from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
@@ -13,7 +13,7 @@ router.post('/login', (req, res) =>{
 
     if( !req.body.password || !req.body.email ) return res.status(500).send({ logged: false, error: 'Missing credentials' });
 
-    passport.authenticate( 'authenticate_user', {session: false}, (error, user, message) =>{
+    Passport.authenticate( 'authenticate_user', {session: false}, (error, user, message) =>{
         
         if(error || !user) {
             res.status(500).send(message);

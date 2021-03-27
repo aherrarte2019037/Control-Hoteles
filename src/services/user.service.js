@@ -16,11 +16,11 @@ export default class UserService {
     }
 
     static async updateById( id, update ) {
-        if( !update ) return { updated: false, error: 'Data not found' };
+        if( !update || Object.keys(update).length === 0 ) return { updated: false, error: 'Data to update not found' };
 
         delete update.password;
         delete update.role;
-        const userEdited = await UserModel.findByIdAndUpdate( id, update );
+        const userEdited = await UserModel.findByIdAndUpdate( id, update, { runValidators: true } );
         
         if( !userEdited ) return { updated: false, error: 'Id invalid or not found' };
         return { updated: true, item: userEdited };

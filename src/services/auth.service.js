@@ -1,7 +1,7 @@
-import Passport from 'passport';
-import PassportJwt from 'passport-jwt';
+import Passport from 'Passport';
+import PassportJwt from 'Passport-jwt';
 import Jwt from 'jsonwebtoken';
-import { Strategy } from 'passport-local';
+import { Strategy } from 'Passport-local';
 import UserModel from '../models/user.model.js';
 
 const SECRET = 'secret_key'
