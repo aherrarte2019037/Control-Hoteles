@@ -1,4 +1,5 @@
 import UserModel from '../models/user.model.js';
+import mongoose from 'mongoose';
 
 export default class UserService {
 
@@ -8,9 +9,6 @@ export default class UserService {
     }
 
     static async register( user ) {
-        const userRepeat = await UserModel.findOne({ $or: [{ username: user.username }, { email: user.email }] });
-        if( userRepeat ) return { registered: false, error: 'Username or email already exists' };
-
         const newUser = await UserModel.create({ ...user });
         return { registered: true, user: newUser }
     }
@@ -35,9 +33,20 @@ export default class UserService {
 
     static async getAll() {
         const users = await UserModel.find({});
-        if( !users ) return { error: 'Users not found' };
+        if( !users || users.length === 0 ) return { error: 'Users not found' };
 
         return users;
+    }
+
+    static async getOneByRole( user, role ) {
+        const id = mongoose.Types.ObjectId( mongoose.isValidObjectId(user)? user:'000000000000' );
+        const foundUser = await UserModel.findOne().and([
+            { role: role },
+            { $or: [{username: new RegExp(`^${user}$`, 'i')}, {_id: id}] }
+        ]);
+        
+        if( !foundUser ) return { error: 'User not found' };
+        return foundUser;
     }
 
 }
