@@ -36,4 +36,83 @@ export default class HotelController {
         }
     }
 
+    static async addRoom( req, res ) {
+        try {
+            const { hotel, room } = req.body;
+            const response = await HotelService.addRoom( hotel, room );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(200).send({ added: false, error: error.message? error.message : error });
+        }
+    }
+
+    static async addService( req, res ) {
+        try {
+            const { hotel, service } = req.body;
+            const response = await HotelService.addService( hotel, service );
+            res.status(200).send(response)
+
+        } catch (error) {
+            res.status(200).send({ added: false, error: error.message? error.message : error });
+        }
+    }
+
+    static async addEvent( req, res ) {
+        try {
+            const { hotel, event } = req.body;
+            const response = await HotelService.addEvent( hotel, event );
+            res.status(200).send(response)
+
+        } catch (error) {
+            res.status(200).send({ added: false, error: error.message? error.message : error });
+        }
+    }
+
+    static async addReservation( req, res ) {
+        try {
+            const { hotel, room } = req.params;
+            const user = req.body.user.id;
+            const reservation = req.body;
+            const response = await HotelService.addReservation( hotel, room, user, reservation );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(200).send({ added: false, error: error.message? error.message : error });
+        }
+    }
+
+    static async getRoomsByHotel( req, res ) {
+        try {
+            const hotel  = req.params.id;
+            const response = await HotelService.getRoomsByHotel( hotel );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
+    static async getEventsByHotel( req, res ) {
+        try {
+            const hotel  = req.params.id;
+            const response = await HotelService.getEventsByHotel( hotel );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
+    static async getReservations( req, res ) {
+        try {
+            const { user } = req.body;
+            const response = await HotelService.getReservations( user );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
 }
