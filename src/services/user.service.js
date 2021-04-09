@@ -1,5 +1,8 @@
 import UserModel from '../models/user.model.js';
+import RoomModel from '../models/room.model.js';
+import HotelModel from '../models/hotel.model.js';
 import mongoose from 'mongoose';
+import { format } from 'date-fns';
 
 export default class UserService {
 
@@ -48,5 +51,11 @@ export default class UserService {
         if( !foundUser ) return { error: 'User not found' };
         return foundUser;
     }
+
+    static async getHistory( user ) {
+        const history = await HotelModel.find({}, 'name').populate({ path: 'rooms', select: { pricePerHour: 0, __v: 0 }, match: { 'reservations.user': user._id }, populate: { path: 'reservations.services._id', select: { price: 0, __v: 0 } } });
+        return history;
+    }
+    
 
 }

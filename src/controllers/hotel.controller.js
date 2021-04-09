@@ -49,9 +49,22 @@ export default class HotelController {
 
     static async addService( req, res ) {
         try {
-            const { hotel, service } = req.body;
+            const hotel = req.params.id;
+            const service = req.body.service;
             const response = await HotelService.addService( hotel, service );
-            res.status(200).send(response)
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(200).send({ added: false, error: error.message? error.message : error });
+        }
+    }
+
+    static async addServiceToReservation( req, res ) {
+        try {
+            const reservation = req.params.id;
+            const { service, quantity, user } = req.body;
+            const response = await HotelService.addServiceToReservation( reservation, service, quantity, user );
+            res.status(200).send(response);
 
         } catch (error) {
             res.status(200).send({ added: false, error: error.message? error.message : error });
@@ -108,6 +121,18 @@ export default class HotelController {
         try {
             const { user } = req.body;
             const response = await HotelService.getReservations( user );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
+    static async getUserByHotel( req, res ) {
+        try {
+            const user  = req.params.id;
+            const admin = req.body.user;
+            const response = await HotelService.getUserByHotel( user, admin );
             res.status(200).send(response);
 
         } catch (error) {

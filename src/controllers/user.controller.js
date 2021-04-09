@@ -47,4 +47,15 @@ export default class UserController {
         }
     }
 
+    static async getHistory( req, res ) {
+        try {
+            const user = req.body.user;
+            const response = await UserService.getHistory( user );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
 }

@@ -3,6 +3,8 @@ import UserService from '../services/user.service.js';
 import RoomModel from '../models/room.model.js';
 import ServiceModel from '../models/service.model.js';
 import mongoose from 'mongoose';
+import UserModel from "../models/user.model.js";
+import { format } from "date-fns";
 
 export default class HotelService {
 
@@ -84,12 +86,12 @@ export default class HotelService {
         if( Array.isArray(newRoom) ) newRoom.map( room => existsHotel.rooms.push(room.id) );
         if( !Array.isArray(newRoom) ) existsHotel.rooms.push(newRoom.id);
         
-        const result = await (await existsHotel.save()).populate('rooms').execPopulate();
+        const result = await (await existsHotel.save({validateBeforeSave: false})).populate('rooms').execPopulate();
         return { added: true, hotel: result };
     }
 
     static async addService( hotel, service = {} ) {
-        if( !hotel || Object.keys(service).length === 0 ) return { added: false, error: 'Missing data' };
+        if( Object.keys(service).length === 0 ) return { added: false, error: 'Missing data' };
 
         const id = mongoose.Types.ObjectId( mongoose.isValidObjectId(hotel)? hotel:'000000000000' );
         let existsHotel = await HotelModel.findOne({ $or: [{name: new RegExp(`^${hotel}$`, 'i')}, {_id: id}] });
@@ -99,8 +101,51 @@ export default class HotelService {
         if( Array.isArray(newService) ) newService.map( service => existsHotel.services.push(service.id) );
         if( !Array.isArray(newService) ) existsHotel.services.push(newService.id);
 
-        const result = await (await existsHotel.save()).populate('services', 'name description price').execPopulate();
+        const result = await (await existsHotel.save({ validateBeforeSave: false })).populate('services', 'name description price').execPopulate();
         return { added: true, hotel: result };
+    }
+
+    static async addServiceToReservation( reservation, service, quantity = 1, user ) {
+        if( !reservation || !service ) return { added: false, error: 'Missing data' };
+        if( quantity <= 0 || isNaN(quantity) ) return { added: false, error: 'Quantity invalid' };
+
+        reservation = mongoose.Types.ObjectId( mongoose.isValidObjectId(reservation)? reservation:'000000000000' );
+        service = mongoose.Types.ObjectId( mongoose.isValidObjectId(service)? service:'000000000000' );
+
+        const existsService = await HotelModel.findOne({ services: service }, 'services');
+        if( !existsService ) return { added: false, error: 'Service not found' };
+
+        const existsReservation = await RoomModel.findOne({ $and: [{ 'reservations._id': reservation }, { 'reservations.user': user._id }] }, 'reservations');
+        if( !existsReservation ) return { added: false, error: 'Reservation not found' };
+
+        const foundReservation = existsReservation.reservations.find( r => reservation.equals(r._id) );
+        const includesService = foundReservation.services.some( s => service.equals(s.id) );
+
+        if( includesService ) {
+            for (const s of foundReservation.services) {
+                if( service.equals(s.id)) { 
+                    s.quantity = s.quantity + quantity;
+                    break;
+                };
+            }
+
+            await existsReservation.save();
+
+            const result = JSON.parse(JSON.stringify(foundReservation));
+            result.entryDateTime = format( foundReservation.entryDateTime, 'yyyy/MM/dd hh:mm:ss aa' );
+            result.exitDateTime = format( foundReservation.entryDateTime, 'yyyy/MM/dd hh:mm:ss aa' );
+
+            return { added: true, reservation: result};
+        };
+
+        foundReservation.services.push({ _id: service, quantity: quantity });
+        await existsReservation.save();
+
+        const result = JSON.parse(JSON.stringify(foundReservation));
+        result.entryDateTime = format( foundReservation.entryDateTime, 'yyyy/MM/dd hh:mm:ss aa' );
+        result.exitDateTime = format( foundReservation.entryDateTime, 'yyyy/MM/dd hh:mm:ss aa' );
+
+        return { added: true, reservation: result };
     }
 
     static async addEvent( hotel, event = {} ) {
@@ -121,15 +166,39 @@ export default class HotelService {
     static async addReservation( hotel, room, user, reservation ) {
         if( !hotel || !reservation || !user || !room ) return { added: false, error: 'Missing data' };
 
-        hotel = mongoose.Types.ObjectId( mongoose.isValidObjectId(room)? room:'000000000000' );
-        room = mongoose.Types.ObjectId( mongoose.isValidObjectId(room)? room:'000000000000' );
+        const hotelId = mongoose.Types.ObjectId( mongoose.isValidObjectId(room)? room:'000000000000' );
+        const roomId = mongoose.Types.ObjectId( mongoose.isValidObjectId(room)? room:'000000000000' );
 
-        const existsHotel = await HotelModel.findOne({ $or: [{name: new RegExp(`^${hotel}$`, 'i')}, {_id: id}] });
+        const existsHotel = await HotelModel.findOne({ $or: [{name: new RegExp(`^${hotel}$`, 'i')}, {_id: hotelId}] });
         if( !existsHotel ) return { added: false, error: 'Hotel not found' };
 
-        const result = await existsHotel.save();
+        const existsRoom = await RoomModel.findOne({ $or: [{name: new RegExp(`^${room}$`, 'i')}, {_id: roomId}] });
+        if( !existsRoom ) return { added: false, error: 'Room not found' };
 
-        return { added: true, events: result.events };
+        for (const r of existsRoom.reservations) {
+            if( new Date(reservation.entryDateTime).toISOString() <= r.exitDateTime.toISOString() ) return { added: false, error: 'Hotel reserved for entry datetime' };
+            if( new Date(reservation.exitDateTime).toISOString() <= r.exitDateTime.toISOString() ) return { added: false, error: 'Hotel reserved for exit datetime' };
+        }
+
+        existsRoom.reservations.push({ ...reservation, user });
+        await existsRoom.save();
+
+        return { added: true, reservation, hotel: existsHotel.name };
+    }
+
+    static async getUserByHotel( user, admin ) {
+        let client;
+
+        if( mongoose.isValidObjectId(user) ) client = await UserModel.findOne({ $and: [{ _id: user }, { role: 'client' }] });
+        if( !mongoose.isValidObjectId(user) ) client = await UserModel.findOne({ $and: [{ username: new RegExp(`${user}`, 'i') }, { role: 'client' }] });
+
+        const hotel = await HotelModel.findOne({ admin: admin.id }).populate({ path: 'rooms', match: { "reservations.user": client?.id } });
+        if( !hotel.rooms || hotel.rooms.length === 0 ) return { error: 'User not found in specified hotel' };
+
+        let reservations = hotel.rooms.map( r => r.reservations );
+        reservations = reservations[0];
+        
+        return { user: client, reservations}
     }
 
 }

@@ -7,6 +7,8 @@ const router = express.Router();
 
 router.get('/', AuthMiddleware.isAppAdmin, UserController.getAll);
 
+router.get('/history', AuthMiddleware.isClient, UserController.getHistory)
+
 router.post('/register', AuthMiddleware.registerUser, UserController.register);
 
 router.post('/login', (req, res) =>{
