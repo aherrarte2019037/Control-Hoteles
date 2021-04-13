@@ -201,4 +201,22 @@ export default class HotelService {
         return { user: client, reservations}
     }
 
+    static async roomAvailability( entryDateTime, exitDateTime, user ) {
+        if( !entryDateTime || !exitDateTime ) return { error: 'Missing data' }
+        const { rooms } = await HotelModel.findOne({ admin: user._id }, 'rooms').populate('rooms');
+        const roomsAvailable = compareReservationsDate( entryDateTime, exitDateTime, rooms );
+        return roomsAvailable;
+    }
+
+}
+
+function compareReservationsDate( entryDateTime, exitDateTime, rooms ) {
+    let roomsAvailable = []
+    rooms.forEach( room => room.reservations.forEach( r =>  {
+        if( new Date( entryDateTime ) > r.exitDateTime && new Date( exitDateTime ) > r.exitDateTime ) {
+            roomsAvailable.push({ _id: room._id, name: room.name, pricePerHour: room.pricePerHour });
+        }
+    }));
+
+    return roomsAvailable;
 }

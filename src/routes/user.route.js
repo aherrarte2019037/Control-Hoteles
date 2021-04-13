@@ -11,6 +11,8 @@ router.get('/history', AuthMiddleware.isClient, UserController.getHistory)
 
 router.post('/register', AuthMiddleware.registerUser, UserController.register);
 
+router.post('/registerHotelAdmin', AuthMiddleware.registerUser, UserController.register);
+
 router.post('/login', (req, res) =>{
 
     if( !req.body.password || !req.body.email ) return res.status(500).send({ logged: false, error: 'Missing credentials' });
@@ -27,6 +29,8 @@ router.post('/login', (req, res) =>{
     })(req, res);
     
 });
+
+router.post('/:user/reservation/:reservation/bill', AuthMiddleware.isHotelAdmin, UserController.addBill)
 
 router.put('/', AuthMiddleware.isLogged, UserController.updateById);
 

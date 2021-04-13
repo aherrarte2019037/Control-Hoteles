@@ -1,6 +1,7 @@
 import UserModel from '../models/user.model.js';
 import RoomModel from '../models/room.model.js';
 import HotelModel from '../models/hotel.model.js';
+import BillModel from '../models/bill.model.js';
 import mongoose from 'mongoose';
 import { format } from 'date-fns';
 
@@ -12,6 +13,11 @@ export default class UserService {
     }
 
     static async register( user ) {
+        const newUser = await UserModel.create({ ...user });
+        return { registered: true, user: newUser }
+    }
+
+    static async registerHotelAdmin( user ) {
         const newUser = await UserModel.create({ ...user });
         return { registered: true, user: newUser }
     }
@@ -56,6 +62,33 @@ export default class UserService {
         const history = await HotelModel.find({}, 'name').populate({ path: 'rooms', select: { pricePerHour: 0, __v: 0 }, match: { 'reservations.user': user._id }, populate: { path: 'reservations.services._id', select: { price: 0, __v: 0 } } });
         return history;
     }
-    
 
+    static async addBill( user, reservation ) {
+        reservation = mongoose.Types.ObjectId( mongoose.isValidObjectId(reservation)? reservation:'000000000000' );
+        user = mongoose.Types.ObjectId( mongoose.isValidObjectId(user)? user:'000000000000' );
+
+        const { reservations, pricePerHour } = await RoomModel.findOne({ $and: [{ 'reservations._id': reservation }, { 'reservations.user': user }] }, 'reservations pricePerHour').populate('reservations.services._id')
+        const existsReservation = reservations?.find( r => r.user = user );
+        if( !reservations || !existsReservation ) return { added: false, error: 'Reservation or user not' };
+
+        const servicesInfo = existsReservation.services.map( s => {
+            return { quantity: s.quantity, price: s._id.price }
+        });
+         const total = getTotal( pricePerHour, existsReservation, servicesInfo );
+
+        const bill = await BillModel.create({ _id: existsReservation._id, total: total, reservation: existsReservation });
+        await bill.populate('reservation.services._id', '-description -__v').execPopulate();
+
+        return { added: true, bill };
+    }
+
+}
+
+function getTotal( roomPrice, reservationInfo, servicesInfo ) {
+    const hours = reservationInfo.exitDateTime.getTime() - reservationInfo.entryDateTime.getTime();
+    roomPrice = ((hours/(3600000) * roomPrice).toFixed(2));
+
+    let servicesPrice = 0;
+    servicesInfo.forEach( s => servicesPrice = servicesPrice + (s.quantity * s.price) );
+    return servicesPrice + roomPrice;
 }

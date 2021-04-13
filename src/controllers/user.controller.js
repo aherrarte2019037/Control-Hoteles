@@ -13,6 +13,17 @@ export default class UserController {
         }
     }
 
+    static async registerHotelAdmin( req, res ) {
+        try {
+            const data = req.body;
+            const response = await UserService.register(data);
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(200).send({ registered: false, error: error.message? error.message : error });
+        }
+    }
+
     static async updateById( req, res ) {
         try {
             const id = req.body.user.id;
@@ -55,6 +66,17 @@ export default class UserController {
 
         } catch (error) {
             res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
+    static async addBill( req, res ) {
+        try {
+            const { user, reservation } = req.params;
+            const response = await UserService.addBill( user, reservation );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(200).send({ added: false, error: error.message? error.message : error });
         }
     }
 

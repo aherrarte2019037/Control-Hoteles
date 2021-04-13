@@ -140,4 +140,15 @@ export default class HotelController {
         }
     }
 
+    static async roomAvailability( req, res ) {
+        try {
+            const { entryDateTime, exitDateTime, user }  = req.body;
+            const response = await HotelService.roomAvailability( entryDateTime, exitDateTime, user );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
 }

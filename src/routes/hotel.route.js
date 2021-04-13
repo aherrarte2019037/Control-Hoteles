@@ -28,4 +28,6 @@ router.post('/event', AuthMiddleware.isAppAdmin, HotelController.addEvent);
 
 router.post('/:hotel/room/:room/reservation', AuthMiddleware.isClient, HotelController.addReservation);
 
+router.post('/room/availability', AuthMiddleware.isHotelAdmin, HotelController.roomAvailability);
+
 export default router;
