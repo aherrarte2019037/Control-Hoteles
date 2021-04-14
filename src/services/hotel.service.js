@@ -165,7 +165,6 @@ export default class HotelService {
 
     static async addReservation( hotel, room, user, reservation ) {
         if( !hotel || !reservation || !user || !room ) return { added: false, error: 'Missing data' };
-
         const hotelId = mongoose.Types.ObjectId( mongoose.isValidObjectId(room)? room:'000000000000' );
         const roomId = mongoose.Types.ObjectId( mongoose.isValidObjectId(room)? room:'000000000000' );
 
@@ -180,9 +179,14 @@ export default class HotelService {
             if( new Date(reservation.exitDateTime).toISOString() <= r.exitDateTime.toISOString() ) return { added: false, error: 'Hotel reserved for exit datetime' };
         }
 
+        existsHotel.reservations += 1;
+        await existsHotel.save({validateBeforeSave: false});
+        
         existsRoom.reservations.push({ ...reservation, user });
         await existsRoom.save();
 
+        reservation.entryDateTime = format( new Date(reservation.entryDateTime), 'yyyy/MM/dd hh:mm:ss aa' );
+        reservation.exitDateTime = format( new Date(reservation.exitDateTime), 'yyyy/MM/dd hh:mm:ss aa' );
         return { added: true, reservation, hotel: existsHotel.name };
     }
 
@@ -204,7 +208,10 @@ export default class HotelService {
     static async roomAvailability( entryDateTime, exitDateTime, user ) {
         if( !entryDateTime || !exitDateTime ) return { error: 'Missing data' }
         const { rooms } = await HotelModel.findOne({ admin: user._id }, 'rooms').populate('rooms');
+
         const roomsAvailable = compareReservationsDate( entryDateTime, exitDateTime, rooms );
+        if( !roomsAvailable || roomsAvailable.length === 0 ) return { error: 'No rooms available for specified datetimes' }
+
         return roomsAvailable;
     }
 

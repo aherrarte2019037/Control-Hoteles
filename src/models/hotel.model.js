@@ -3,18 +3,19 @@ import uniqueValidator from 'mongoose-unique-validator';
 import { format } from "date-fns";
 
 const HotelSchema = mongoose.Schema({
-    name       : { type: String, required: [true, 'Name is required'], unique: true, uniqueCaseInsensitive: true },
-    stars      : { type: Number, required: [true, 'Stars is required'], min: 1, max: 5 },
-    description: { type: String, required: [true, 'Description is required'] },
-    country    : { type: String, required: [true, 'Country is required'] },
-    city       : { type: String, required: [true, 'City is required'] },
-    address    : { type: String, required: [true, 'Address is required'], unique: true, uniqueCaseInsensitive: true },
-    likes      : { type: Number, default: 0 },
-    dislikes   : { type: Number, default: 0 },
-    admin      : { type: mongoose.Schema.Types.ObjectId, ref: 'User', unique: true },
-    rooms      : [{ type: mongoose.Schema.Types.ObjectId, ref: 'Room' }],
-    services   : [{ type: mongoose.Schema.Types.ObjectId, ref: 'Service' }],
-    events     : [{
+    name        : { type: String, required: [true, 'Name is required'], unique: true, uniqueCaseInsensitive: true },
+    stars       : { type: Number, required: [true, 'Stars is required'], min: 1, max: 5 },
+    description : { type: String, required: [true, 'Description is required'] },
+    country     : { type: String, required: [true, 'Country is required'] },
+    city        : { type: String, required: [true, 'City is required'] },
+    address     : { type: String, required: [true, 'Address is required'], unique: true, uniqueCaseInsensitive: true },
+    likes       : { type: Number, default: 0 },
+    dislikes    : { type: Number, default: 0 },
+    admin       : { type: mongoose.Schema.Types.ObjectId, ref: 'User', unique: true },
+    rooms       : [{ type: mongoose.Schema.Types.ObjectId, ref: 'Room' }],
+    reservations: { type: Number, default: 0, min: 0 },
+    services    : [{ type: mongoose.Schema.Types.ObjectId, ref: 'Service' }],
+    events      : [{
         name         : { type: String, required: [true, 'Event name is required'], unique: true, uniqueCaseInsensitive: true },
         type         : { type: String, enum: ['Concierto', 'Fiesta', 'Deportivo', 'Cultural', 'Corporativo', 'Otro'], required: [true, 'Event type is required'] },
         description  : { type: String, required: [true, 'Event description is required'] },
