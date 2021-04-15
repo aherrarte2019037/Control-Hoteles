@@ -4,7 +4,11 @@ import HotelController from '../controllers/hotel.controller.js';
 
 const router = express.Router();
 
+router.get('/bestsellers', AuthMiddleware.isAppAdmin, HotelController.getBestSellers);
+
 router.get('/reservation', AuthMiddleware.isHotelAdmin, HotelController.getReservations);
+
+router.get('/:hotel/reservation', AuthMiddleware.isAppAdmin, HotelController.getReservationsAdmin);
 
 router.get('/all/:search?', HotelController.getAll);
 

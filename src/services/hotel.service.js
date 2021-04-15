@@ -75,6 +75,22 @@ export default class HotelService {
         return hotel.rooms
     }
 
+    static async getReservationsByHotel( hotel ) {
+        const id = mongoose.Types.ObjectId( mongoose.isValidObjectId(hotel)? hotel:'000000000000' );
+        const existsHotel = await HotelModel.findOne({ $or: [{ _id: id }, { name: new RegExp(`${hotel}`, 'i') }] }).populate('rooms');
+        if( !existsHotel || existsHotel.length === 0 ) return { error: 'Hotel not found' };
+        if( existsHotel.rooms.length === 0 || existsHotel.rooms.reservations?.length === 0 ) return { error: 'Reservations not found' };
+
+        return existsHotel;
+    }
+
+    static async getBestSellers(  ) {
+        const bestSellers = await HotelModel.find({}, '-services -events').sort({ reservations: -1 }).limit( 3 ).populate('rooms')
+        if( !bestSellers || bestSellers.length === 0 ) return { error: 'Hotels not found' };
+
+        return bestSellers;
+    }
+
     static async addRoom( hotel, room = {} ) {
         if( !hotel || Object.keys(room).length === 0 ) return { added: false, error: 'Missing data' };
 

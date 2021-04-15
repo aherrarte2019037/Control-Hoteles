@@ -128,6 +128,17 @@ export default class HotelController {
         }
     }
 
+    static async getReservationsAdmin( req, res ) {
+        try {
+            const hotel = req.params.hotel;
+            const response = await HotelService.getReservationsByHotel( hotel );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
     static async getUserByHotel( req, res ) {
         try {
             const user  = req.params.id;
@@ -144,6 +155,16 @@ export default class HotelController {
         try {
             const { entryDateTime, exitDateTime, user }  = req.body;
             const response = await HotelService.roomAvailability( entryDateTime, exitDateTime, user );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
+    static async getBestSellers( req, res ) {
+        try {
+            const response = await HotelService.getBestSellers();
             res.status(200).send(response);
 
         } catch (error) {
