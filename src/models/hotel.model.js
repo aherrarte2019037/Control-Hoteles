@@ -3,7 +3,7 @@ import uniqueValidator from 'mongoose-unique-validator';
 import { format } from "date-fns";
 
 const HotelSchema = mongoose.Schema({
-    name        : { type: String, required: [true, 'Name is required'], unique: true, uniqueCaseInsensitive: true },
+    name        : { type: String, required: [true, 'Name is required'],  minLength: 2, maxLength: 30, unique: true, uniqueCaseInsensitive: true },
     stars       : { type: Number, required: [true, 'Stars is required'], min: 1, max: 5 },
     description : { type: String, required: [true, 'Description is required'] },
     country     : { type: String, required: [true, 'Country is required'] },
@@ -16,7 +16,7 @@ const HotelSchema = mongoose.Schema({
     reservations: { type: Number, default: 0, min: 0 },
     services    : [{ type: mongoose.Schema.Types.ObjectId, ref: 'Service' }],
     events      : [{
-        name         : { type: String, required: [true, 'Event name is required'], unique: true, uniqueCaseInsensitive: true },
+        name         : { type: String, required: [true, 'Event name is required'] },
         type         : { type: String, enum: ['Concierto', 'Fiesta', 'Deportivo', 'Cultural', 'Corporativo', 'Otro'], required: [true, 'Event type is required'] },
         description  : { type: String, required: [true, 'Event description is required'] },
         start        : { type: Date, required: [true, 'Event start is required'], min: Date.now() },

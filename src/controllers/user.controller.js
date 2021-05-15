@@ -58,6 +58,27 @@ export default class UserController {
         }
     }
 
+    static async getById( req, res ) {
+        try {
+            const id = req.params.id;
+            const response = await UserService.getById( id );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
+    static async getAdminHotelUnassigned( req, res ) {
+        try {
+            const response = await UserService.getAdminHotelUnassigned();
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
     static async getHistory( req, res ) {
         try {
             const user = req.body.user;

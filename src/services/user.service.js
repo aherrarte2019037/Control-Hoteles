@@ -9,7 +9,7 @@ export default class UserService {
 
     static async createAdmin() {
         const userRepeat = await UserModel.findOne({ username: 'AppAdmin' });
-        if( !userRepeat ) await UserModel.create({ username: 'AppAdmin', role: 'app_admin', email: 'app@admin.com', password: '12345', firstname: 'App', lastname: 'Admin' });
+        if( !userRepeat ) await UserModel.create({ username: 'AppAdmin', role: 'app_admin', email: 'app@admin.com', password: 'AdminPass12', firstname: 'App', lastname: 'Admin' });
     }
 
     static async register( user ) {
@@ -27,7 +27,7 @@ export default class UserService {
 
         delete update.password;
         delete update.role;
-        const userEdited = await UserModel.findByIdAndUpdate( id, update, { runValidators: true } );
+        const userEdited = await UserModel.findByIdAndUpdate( id, update, { runValidators: true, context: 'query' } );
         
         if( !userEdited ) return { updated: false, error: 'Id invalid or not found' };
         return { updated: true, item: userEdited };
@@ -63,6 +63,17 @@ export default class UserService {
         return history;
     }
 
+    static async getAdminHotelUnassigned() {
+        const usersAdmin = ( await HotelModel.find({}, 'admin -_id')).map( user => user.admin.toString() );
+        const users = (await UserModel.find({}, '_id')).map( user => user.id );
+
+        //Usuarios administradores de hotel que no estan asignados
+        const unassignedIds = users.filter( el => !usersAdmin.includes(el) ); 
+        const unassignedUsers = await UserModel.find({ $and: [ {_id: { "$in" : unassignedIds}, role: 'hotel_admin'} ] })
+
+        return unassignedUsers;
+    }
+
     static async addBill( user, reservation ) {
         reservation = mongoose.Types.ObjectId( mongoose.isValidObjectId(reservation)? reservation:'000000000000' );
         user = mongoose.Types.ObjectId( mongoose.isValidObjectId(user)? user:'000000000000' );
@@ -82,6 +93,13 @@ export default class UserService {
         return { added: true, bill };
     }
 
+    static async getById( id ) {
+        const user = await UserModel.findById( id );
+        if( !user || user.length === 0 ) return { error: 'User not found' };
+
+        return user;
+    }
+
 }
 
 function getTotal( roomPrice, reservationInfo, servicesInfo ) {
@@ -91,4 +109,8 @@ function getTotal( roomPrice, reservationInfo, servicesInfo ) {
     let servicesPrice = 0;
     servicesInfo.forEach( s => servicesPrice = servicesPrice + (s.quantity * s.price) );
     return servicesPrice + roomPrice;
+}
+
+function onlyUnique(value, index, self) { 
+    return self.indexOf(value) === index;
 }

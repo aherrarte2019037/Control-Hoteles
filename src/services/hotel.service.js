@@ -22,7 +22,7 @@ export default class HotelService {
     static async getAll( search = null ) {
         let hotels;
         if( !search ) {
-            hotels = await HotelModel.find({}).select({ admin: 0 });
+            hotels = await HotelModel.find({}).select({ admin: 0 }).populate('rooms services')
 
         } else {
             search = search.trim();
@@ -32,7 +32,21 @@ export default class HotelService {
 
         if( !hotels || hotels.length === 0 ) return { error: 'Hotels not found' };
 
-        return hotels;
+        return hotels.reverse();
+    }
+
+    static async getAllRooms() {
+        const rooms = await HotelModel.find({}, 'rooms _id name country city address stars').populate('rooms');
+        if( !rooms || rooms.length === 0 ) return { error: 'Rooms not found' }
+
+        let result;
+        rooms.forEach( data => {
+            result = data.rooms.map( room => {
+                return {room, hotel: { name: data.name, _id: data._id, country: data.country, city: data.city, address: data.address, stars: data.stars }}
+            })
+        })
+
+        return result.reverse();
     }
 
     static async getOne( search = null ) {
@@ -41,9 +55,10 @@ export default class HotelService {
             hotel = await HotelModel.findOne({}).select({ admin: 0 });
 
         } else {
+            const admin = mongoose.Types.ObjectId( mongoose.isValidObjectId(search)? search:'000000000000' );
             search = search.trim();
             const regex = new RegExp(`${search}`, 'i');
-            hotel = await HotelModel.findOne({ $or: [{ name: regex }, { country: regex }, { city: regex }, { address: regex }] });
+            hotel = (await HotelModel.findOne({ $or: [{ name: regex }, { country: regex }, { city: regex }, { address: regex }, { admin: admin }] }).populate('services'))
         }
 
         if( !hotel || hotel.length === 0 ) return { error: 'Hotel not found' };
@@ -110,7 +125,7 @@ export default class HotelService {
         if( Object.keys(service).length === 0 ) return { added: false, error: 'Missing data' };
 
         const id = mongoose.Types.ObjectId( mongoose.isValidObjectId(hotel)? hotel:'000000000000' );
-        let existsHotel = await HotelModel.findOne({ $or: [{name: new RegExp(`^${hotel}$`, 'i')}, {_id: id}] });
+        let existsHotel = await HotelModel.findOne({ $or: [{name: new RegExp(`^${hotel}$`, 'i')}, {_id: id}, {admin: id}] });
         if( !existsHotel ) return { added: false, error: 'Hotel not found' };
         
         const newService = await ServiceModel.create(service);
@@ -181,7 +196,7 @@ export default class HotelService {
 
     static async addReservation( hotel, room, user, reservation ) {
         if( !hotel || !reservation || !user || !room ) return { added: false, error: 'Missing data' };
-        const hotelId = mongoose.Types.ObjectId( mongoose.isValidObjectId(room)? room:'000000000000' );
+        const hotelId = mongoose.Types.ObjectId( mongoose.isValidObjectId(hotel)? hotel:'000000000000' );
         const roomId = mongoose.Types.ObjectId( mongoose.isValidObjectId(room)? room:'000000000000' );
 
         const existsHotel = await HotelModel.findOne({ $or: [{name: new RegExp(`^${hotel}$`, 'i')}, {_id: hotelId}] });
@@ -191,8 +206,8 @@ export default class HotelService {
         if( !existsRoom ) return { added: false, error: 'Room not found' };
 
         for (const r of existsRoom.reservations) {
-            if( new Date(reservation.entryDateTime).toISOString() <= r.exitDateTime.toISOString() ) return { added: false, error: 'Hotel reserved for entry datetime' };
-            if( new Date(reservation.exitDateTime).toISOString() <= r.exitDateTime.toISOString() ) return { added: false, error: 'Hotel reserved for exit datetime' };
+            if( new Date(reservation.entryDateTime).toISOString() >= r.entryDateTime.toISOString() && new Date(reservation.entryDateTime).toISOString() <= r.exitDateTime.toISOString() ) return { added: false, error: 'Room reserved for entry datetime' };
+            if( new Date(reservation.exitDateTime).toISOString() >= r.entryDateTime.toISOString() && new Date(reservation.exitDateTime).toISOString() <= r.exitDateTime.toISOString() ) return { added: false, error: 'Room reserved for entry datetime' };
         }
 
         existsHotel.reservations += 1;
@@ -231,12 +246,22 @@ export default class HotelService {
         return roomsAvailable;
     }
 
+    static async addLike( id ) {
+        const hotelUpdated = await HotelModel.findByIdAndUpdate( id, { $inc: { likes: 1 } } );
+        return hotelUpdated;
+    }
+
+    static async addDislike( id ) {
+        const hotelUpdated = await HotelModel.findByIdAndUpdate( id, { $inc: { dislikes: 1 } } );
+        return hotelUpdated;
+    }
+
 }
 
 function compareReservationsDate( entryDateTime, exitDateTime, rooms ) {
     let roomsAvailable = []
     rooms.forEach( room => room.reservations.forEach( r =>  {
-        if( new Date( entryDateTime ) > r.exitDateTime && new Date( exitDateTime ) > r.exitDateTime ) {
+        if( new Date( entryDateTime ) >= r.exitDateTime && new Date( exitDateTime ) >= r.exitDateTime ) {
             roomsAvailable.push({ _id: room._id, name: room.name, pricePerHour: room.pricePerHour });
         }
     }));

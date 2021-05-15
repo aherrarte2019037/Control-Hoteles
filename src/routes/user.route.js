@@ -7,7 +7,11 @@ const router = express.Router();
 
 router.get('/', AuthMiddleware.isAppAdmin, UserController.getAll);
 
+router.get('/:id', AuthMiddleware.isLogged, UserController.getById);
+
 router.get('/history', AuthMiddleware.isClient, UserController.getHistory)
+
+router.get('/admin/unassigned', AuthMiddleware.isAppAdmin, UserController.getAdminHotelUnassigned)
 
 router.post('/register', AuthMiddleware.registerUser, UserController.register);
 

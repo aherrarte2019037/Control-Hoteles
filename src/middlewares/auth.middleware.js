@@ -27,7 +27,6 @@ export default class AuthMiddleware {
 
     static isLogged( req, res, next ) {
         Passport.authenticate( 'authorize_user', {session: false}, (error, user, message) =>{
-
             if(error || !user ) {
                 res.status(500).send('Unauthorized');
         

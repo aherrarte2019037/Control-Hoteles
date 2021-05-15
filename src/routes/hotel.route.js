@@ -12,7 +12,13 @@ router.get('/:hotel/reservation', AuthMiddleware.isAppAdmin, HotelController.get
 
 router.get('/all/:search?', HotelController.getAll);
 
+router.get( '/room/all', HotelController.getAllRooms )
+
 router.get('/:search?', HotelController.getOne);
+
+router.put('/:id/like', AuthMiddleware.isLogged, HotelController.addLike);
+
+router.put('/:id/dislike', AuthMiddleware.isLogged, HotelController.addDislike);
 
 router.get('/user/:id', AuthMiddleware.isHotelAdmin, HotelController.getUserByHotel)
 
@@ -24,7 +30,7 @@ router.post('/', AuthMiddleware.isAppAdmin, HotelController.add);
 
 router.post('/room', AuthMiddleware.isAppAdmin, HotelController.addRoom);
 
-router.post('/:id/service', AuthMiddleware.isAppAdmin, HotelController.addService);
+router.post('/:id/service', AuthMiddleware.isHotelAdmin, HotelController.addService);
 
 router.post('/reservation/:id/service', AuthMiddleware.isClient, HotelController.addServiceToReservation)
 

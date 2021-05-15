@@ -25,6 +25,16 @@ export default class HotelController {
         }
     }
 
+    static async getAllRooms( req, res ) {
+        try {
+            const response = await HotelService.getAllRooms();
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
     static async getOne( req, res ) {
         try {
             const { search } = req.params;
@@ -165,6 +175,28 @@ export default class HotelController {
     static async getBestSellers( req, res ) {
         try {
             const response = await HotelService.getBestSellers();
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
+    static async addLike( req, res ) {
+        try {
+            const id = req.params.id;
+            const response = await HotelService.addLike( id );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
+    static async addDislike( req, res ) {
+        try {
+            const id = req.params.id;
+            const response = await HotelService.addDislike( id );
             res.status(200).send(response);
 
         } catch (error) {
