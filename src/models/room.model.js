@@ -7,8 +7,9 @@ const RoomSchema = mongoose.Schema({
     pricePerHour : { type: Number, required: [true, 'Priceperhour is required'], min: 1 },
     reservations : [{
         user         : { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: [true, 'User is required'] },
-        entryDateTime: { type: Date, required: [true, 'Entry DateTime is required'], min: Date.now() },
-        exitDateTime : { type: Date, required: [true, 'Exit DateTime is required'], min: Date.now() },
+        entryDateTime: { type: Date, required: [true, 'Entry DateTime is required'] },
+        exitDateTime : { type: Date, required: [true, 'Exit DateTime is required'] },
+        cancelled    : { type: Boolean, default: false},
         services     : [{ 
             _id      : { type: mongoose.Schema.Types.ObjectId, ref: 'Service' },
             quantity : { type: Number, min: 1, default: 1 }

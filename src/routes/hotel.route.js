@@ -8,6 +8,8 @@ router.get('/bestsellers', AuthMiddleware.isAppAdmin, HotelController.getBestSel
 
 router.get('/reservation', AuthMiddleware.isHotelAdmin, HotelController.getReservations);
 
+router.get('/reservation/user', AuthMiddleware.isClient, HotelController.getReservationsByUser);
+
 router.get('/:hotel/reservation', AuthMiddleware.isAppAdmin, HotelController.getReservationsAdmin);
 
 router.get('/all/:search?', HotelController.getAll);
@@ -19,6 +21,8 @@ router.get('/:search?', HotelController.getOne);
 router.put('/:id/like', AuthMiddleware.isLogged, HotelController.addLike);
 
 router.put('/:id/dislike', AuthMiddleware.isLogged, HotelController.addDislike);
+
+router.put('/room/:room/reservation/:reservation/status', AuthMiddleware.isClient, HotelController.editReservationStatus)
 
 router.get('/user/:id', AuthMiddleware.isHotelAdmin, HotelController.getUserByHotel)
 

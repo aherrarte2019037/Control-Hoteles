@@ -149,6 +149,17 @@ export default class HotelController {
         }
     }
 
+    static async getReservationsByUser( req, res) {
+        try {
+            const user = req.body.user.id;
+            const response = await HotelService.getReservationsByUser( user );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
     static async getUserByHotel( req, res ) {
         try {
             const user  = req.params.id;
@@ -197,6 +208,19 @@ export default class HotelController {
         try {
             const id = req.params.id;
             const response = await HotelService.addDislike( id );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
+    static async editReservationStatus( req, res ) {
+        try {
+            const { room, reservation } = req.params;
+            const { cancelled, user } = req.body;
+
+            const response = await HotelService.editReservationStatus( cancelled, room, reservation, user );
             res.status(200).send(response);
 
         } catch (error) {

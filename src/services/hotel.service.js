@@ -99,6 +99,19 @@ export default class HotelService {
         return existsHotel;
     }
 
+    static async getReservationsByUser( user ) {
+        const id = mongoose.Types.ObjectId( mongoose.isValidObjectId(user)? user:'000000000000' );
+        const hotels = await HotelModel.find().populate('rooms')
+        if( !hotels || hotels.length === 0 ) return { error: 'Reservations not found' };
+
+        let filterReservations = [];
+        hotels.forEach(  hotel => hotel.rooms.forEach( r => r.reservations.forEach( reservation => {
+            if( reservation.user.toString() === user ) filterReservations.push({ hotel: hotel.name, description: hotel.description, address: hotel.address, country: hotel.country, room: r.name, roomId: r.id, pricePerHour: r.pricePerHour, reservation });
+        })));
+
+        return filterReservations;
+    }
+
     static async getBestSellers(  ) {
         const bestSellers = await HotelModel.find({}, '-services -events').sort({ reservations: -1 }).limit( 3 ).populate('rooms')
         if( !bestSellers || bestSellers.length === 0 ) return { error: 'Hotels not found' };
@@ -254,6 +267,17 @@ export default class HotelService {
     static async addDislike( id ) {
         const hotelUpdated = await HotelModel.findByIdAndUpdate( id, { $inc: { dislikes: 1 } } );
         return hotelUpdated;
+    }
+
+    static async editReservationStatus( cancelled, room, reservation ) {
+        if( cancelled === undefined || cancelled === null) return { statusUpdate: false, error: 'Missing data' };
+
+        const reservationId = mongoose.Types.ObjectId( mongoose.isValidObjectId(reservation)? reservation:'000000000000' );
+        const roomId = mongoose.Types.ObjectId( mongoose.isValidObjectId(room)? room:'000000000000' );
+
+        const reservationUpdated = await RoomModel.findOneAndUpdate({ _id: roomId ,'reservations._id': reservationId }, { $set: { 'reservations.$.cancelled': cancelled } })
+
+        return reservationUpdated;
     }
 
 }
