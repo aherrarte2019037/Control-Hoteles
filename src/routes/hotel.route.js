@@ -24,6 +24,8 @@ router.put('/:id/dislike', AuthMiddleware.isLogged, HotelController.addDislike);
 
 router.put('/room/:room/reservation/:reservation/status', AuthMiddleware.isClient, HotelController.editReservationStatus)
 
+router.delete('/room/:room/reservation/:reservation', AuthMiddleware.isClient, HotelController.deleteReservation)
+
 router.get('/user/:id', AuthMiddleware.isHotelAdmin, HotelController.getUserByHotel)
 
 router.get('/:id/room', AuthMiddleware.isClient, HotelController.getRoomsByHotel);

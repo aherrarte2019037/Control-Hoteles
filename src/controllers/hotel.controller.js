@@ -228,4 +228,16 @@ export default class HotelController {
         }
     }
 
+    static async deleteReservation( req, res ) {
+        try {
+            const { room, reservation } = req.params;
+
+            const response = await HotelService.deleteReservation( room, reservation );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
 }

@@ -280,6 +280,15 @@ export default class HotelService {
         return reservationUpdated;
     }
 
+    static async deleteReservation( room, reservation ) {
+        const reservationId = mongoose.Types.ObjectId( mongoose.isValidObjectId(reservation)? reservation:'000000000000' );
+        const roomId = mongoose.Types.ObjectId( mongoose.isValidObjectId(room)? room:'000000000000' );
+
+        const reservationDeleted = await RoomModel.findOneAndUpdate({ _id: roomId }, { $pull: { reservations: { _id: reservationId } } })
+        
+        return reservationDeleted;
+    }
+
 }
 
 function compareReservationsDate( entryDateTime, exitDateTime, rooms ) {
