@@ -9,7 +9,9 @@ router.get('/', AuthMiddleware.isAppAdmin, UserController.getAll);
 
 router.get('/:id', AuthMiddleware.isLogged, UserController.getById);
 
-router.get('/history', AuthMiddleware.isClient, UserController.getHistory)
+router.get('/all/history', AuthMiddleware.isClient, UserController.getHistory);
+
+router.get('/room/:room/service/reservation/:reservation', AuthMiddleware.isClient, UserController.getServicesByReservation)
 
 router.get('/admin/unassigned', AuthMiddleware.isAppAdmin, UserController.getAdminHotelUnassigned)
 

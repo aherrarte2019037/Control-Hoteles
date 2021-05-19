@@ -3,7 +3,6 @@ import RoomModel from '../models/room.model.js';
 import HotelModel from '../models/hotel.model.js';
 import BillModel from '../models/bill.model.js';
 import mongoose from 'mongoose';
-import { format } from 'date-fns';
 
 export default class UserService {
 
@@ -63,6 +62,28 @@ export default class UserService {
         return history;
     }
 
+    static async getServicesByReservation( user, reservation, room ) {
+        const history = await HotelModel.find({}, 'name').populate({ path: 'rooms', select: { pricePerHour: 0, __v: 0 }, match: { 'reservations.user': user._id }, populate: { path: 'reservations.services._id', select: { price: 0, __v: 0 } } });
+        
+        let foundRoom;
+        history.forEach( data => {
+            data.rooms.forEach( r => {
+                if(r._id.toString() === room.toString()) foundRoom = r;
+            })
+        });
+
+        let foundReservation;
+        foundRoom.reservations.forEach( data => {
+            if( data._id.toString() === reservation.toString() ) foundReservation = data;
+        });
+
+        const services = foundReservation?.services;
+
+        if( !services ) return { error: 'Services not found' }
+
+        return services;
+    }
+
     static async getAdminHotelUnassigned() {
         const usersAdmin = ( await HotelModel.find({}, 'admin -_id')).map( user => user.admin.toString() );
         const users = (await UserModel.find({}, '_id')).map( user => user.id );
@@ -111,6 +132,3 @@ function getTotal( roomPrice, reservationInfo, servicesInfo ) {
     return servicesPrice + roomPrice;
 }
 
-function onlyUnique(value, index, self) { 
-    return self.indexOf(value) === index;
-}

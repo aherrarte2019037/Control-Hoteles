@@ -81,6 +81,7 @@ export default class UserController {
 
     static async getHistory( req, res ) {
         try {
+            console.log('dadasd')
             const user = req.body.user;
             const response = await UserService.getHistory( user );
             res.status(200).send(response);
@@ -94,6 +95,18 @@ export default class UserController {
         try {
             const { user, reservation } = req.params;
             const response = await UserService.addBill( user, reservation );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(200).send({ added: false, error: error.message? error.message : error });
+        }
+    }
+
+    static async getServicesByReservation( req, res ) {
+        try {
+            const {room, reservation}  = req.params;
+            const user = req.body.user;
+            const response = await UserService.getServicesByReservation( user, reservation, room );
             res.status(200).send(response);
 
         } catch (error) {

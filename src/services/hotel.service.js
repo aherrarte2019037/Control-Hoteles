@@ -58,7 +58,7 @@ export default class HotelService {
             const admin = mongoose.Types.ObjectId( mongoose.isValidObjectId(search)? search:'000000000000' );
             search = search.trim();
             const regex = new RegExp(`${search}`, 'i');
-            hotel = (await HotelModel.findOne({ $or: [{ name: regex }, { country: regex }, { city: regex }, { address: regex }, { admin: admin }] }).populate('services'))
+            hotel = (await HotelModel.findOne({ $or: [{ name: regex }, { country: regex }, { city: regex }, { address: regex }, { admin: admin }, { _id: admin }] }).populate('services'))
         }
 
         if( !hotel || hotel.length === 0 ) return { error: 'Hotel not found' };
@@ -106,7 +106,7 @@ export default class HotelService {
 
         let filterReservations = [];
         hotels.forEach(  hotel => hotel.rooms.forEach( r => r.reservations.forEach( reservation => {
-            if( reservation.user.toString() === user ) filterReservations.push({ hotel: hotel.name, description: hotel.description, address: hotel.address, country: hotel.country, room: r.name, roomId: r.id, pricePerHour: r.pricePerHour, reservation });
+            if( reservation.user.toString() === user ) filterReservations.push({ hotel: hotel.name, hotelId: hotel.id, description: hotel.description, address: hotel.address, country: hotel.country, room: r.name, roomId: r.id, pricePerHour: r.pricePerHour, reservation });
         })));
 
         return filterReservations;
@@ -151,7 +151,7 @@ export default class HotelService {
 
     static async addServiceToReservation( reservation, service, quantity = 1, user ) {
         if( !reservation || !service ) return { added: false, error: 'Missing data' };
-        if( quantity <= 0 || isNaN(quantity) ) return { added: false, error: 'Quantity invalid' };
+        if( quantity < 0 || isNaN(quantity) ) return { added: false, error: 'Quantity invalid' };
 
         reservation = mongoose.Types.ObjectId( mongoose.isValidObjectId(reservation)? reservation:'000000000000' );
         service = mongoose.Types.ObjectId( mongoose.isValidObjectId(service)? service:'000000000000' );
@@ -165,10 +165,24 @@ export default class HotelService {
         const foundReservation = existsReservation.reservations.find( r => reservation.equals(r._id) );
         const includesService = foundReservation.services.some( s => service.equals(s.id) );
 
+        if( Number(quantity) === 0 && includesService ) {
+            let index;
+
+            foundReservation.services.forEach( ( s, i ) => {
+                if( s._id.toString() === service.toString() ) index = i
+            })
+
+            foundReservation.services.splice( index, 1 );
+            await existsReservation.save();
+            
+            const result = JSON.parse(JSON.stringify(foundReservation));
+            return { added: true, reservation: result};
+        } 
+
         if( includesService ) {
             for (const s of foundReservation.services) {
                 if( service.equals(s.id)) { 
-                    s.quantity = s.quantity + quantity;
+                    s.quantity = quantity;
                     break;
                 };
             }
