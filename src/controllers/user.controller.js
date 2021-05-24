@@ -48,6 +48,18 @@ export default class UserController {
         }
     }
 
+    static async getTotalPriceReservation( req, res ) {
+        try {
+            const user = req.body.user.id;
+            const reservation = req.params.id;
+            const response = await UserService.getTotalPriceReservation( user, reservation );
+            res.status(200).send(response);
+            
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
     static async getAll( req, res ) {
         try {
             const response = await UserService.getAll();

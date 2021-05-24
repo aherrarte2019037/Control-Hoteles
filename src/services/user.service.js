@@ -101,17 +101,33 @@ export default class UserService {
 
         const { reservations, pricePerHour } = await RoomModel.findOne({ $and: [{ 'reservations._id': reservation }, { 'reservations.user': user }] }, 'reservations pricePerHour').populate('reservations.services._id')
         const existsReservation = reservations?.find( r => r.user = user );
-        if( !reservations || !existsReservation ) return { added: false, error: 'Reservation or user not' };
+        if( !reservations || !existsReservation ) return { added: false, error: 'Reservation or user not found' };
 
         const servicesInfo = existsReservation.services.map( s => {
             return { quantity: s.quantity, price: s._id.price }
         });
-         const total = getTotal( pricePerHour, existsReservation, servicesInfo );
+        const total = getTotal( pricePerHour, existsReservation, servicesInfo );
 
         const bill = await BillModel.create({ _id: existsReservation._id, total: total, reservation: existsReservation });
         await bill.populate('reservation.services._id', '-description -__v').execPopulate();
 
         return { added: true, bill };
+    }
+
+    static async getTotalPriceReservation( user, reservation ) {
+        reservation = mongoose.Types.ObjectId( mongoose.isValidObjectId(reservation)? reservation:'000000000000' );
+        user = mongoose.Types.ObjectId( mongoose.isValidObjectId(user)? user:'000000000000' );
+
+        const { reservations, pricePerHour } = await RoomModel.findOne({ $and: [{ 'reservations._id': reservation }, { 'reservations.user': user }] }, 'reservations pricePerHour').populate('reservations.services._id')
+        const existsReservation = reservations?.find( r => r._id.toString() === reservation.toString() && r.user.toString() === user.toString() );
+        if( !reservations || !existsReservation ) return { error: 'Reservation or user not found' };
+
+        const servicesInfo = existsReservation.services.map( s => {
+            return { quantity: s.quantity, price: s._id.price, name: s._id.name }
+        });
+
+        const total = getTotal( pricePerHour, existsReservation, servicesInfo, true );
+        return total;
     }
 
     static async getById( id ) {
@@ -123,12 +139,14 @@ export default class UserService {
 
 }
 
-function getTotal( roomPrice, reservationInfo, servicesInfo ) {
+function getTotal( roomPrice, reservationInfo, servicesInfo, details ) {
     const hours = reservationInfo.exitDateTime.getTime() - reservationInfo.entryDateTime.getTime();
-    roomPrice = ((hours/(3600000) * roomPrice).toFixed(2));
+    roomPrice = (((hours/3600000) * roomPrice).toFixed(2));
 
     let servicesPrice = 0;
-    servicesInfo.forEach( s => servicesPrice = servicesPrice + (s.quantity * s.price) );
-    return servicesPrice + roomPrice;
+    servicesInfo.forEach( s =>  servicesPrice = servicesPrice + (s.quantity * s.price) );
+
+    if( details ) return { total: Number(servicesPrice) + Number(roomPrice), roomPrice: Number(roomPrice), hoursStay: Number((hours/3600000).toFixed(2)), servicesPrice, services: servicesInfo }
+    return (Number(servicesPrice) + Number(roomPrice)).toString();
 }
 

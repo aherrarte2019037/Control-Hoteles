@@ -15,6 +15,8 @@ router.get('/room/:room/service/reservation/:reservation', AuthMiddleware.isClie
 
 router.get('/admin/unassigned', AuthMiddleware.isAppAdmin, UserController.getAdminHotelUnassigned)
 
+router.get('/reservation/:id', AuthMiddleware.isClient, UserController.getTotalPriceReservation)
+
 router.post('/register', AuthMiddleware.registerUser, UserController.register);
 
 router.post('/registerHotelAdmin', AuthMiddleware.registerUser, UserController.register);
@@ -40,6 +42,6 @@ router.post('/:user/reservation/:reservation/bill', AuthMiddleware.isHotelAdmin,
 
 router.put('/', AuthMiddleware.isLogged, UserController.updateById);
 
-router.delete('/', AuthMiddleware.isLogged, UserController.deleteById);
+router.delete('/', AuthMiddleware.isClient, UserController.deleteById);
 
 export default router;
