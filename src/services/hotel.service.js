@@ -39,13 +39,15 @@ export default class HotelService {
         const rooms = await HotelModel.find({}, 'rooms _id name country city address stars').populate('rooms');
         if( !rooms || rooms.length === 0 ) return { error: 'Rooms not found' }
 
-        let result;
+        let result = [];
+
         rooms.forEach( data => {
-            result = data.rooms.map( room => {
-                return {room, hotel: { name: data.name, _id: data._id, country: data.country, city: data.city, address: data.address, stars: data.stars }}
+            data.rooms.forEach( room => {
+                const dataFormatted = {room, hotel: { name: data.name, _id: data._id, country: data.country, city: data.city, address: data.address, stars: data.stars }};
+                result.push( dataFormatted );
             })
         })
-
+        
         return result.reverse();
     }
 
