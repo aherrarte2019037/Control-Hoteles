@@ -3,8 +3,11 @@ import uniqueValidator from 'mongoose-unique-validator';
 import { format } from "date-fns";
 
 const BillSchema = mongoose.Schema({
-    date       : { type: Date, default: Date.now(), min: Date.now() },
-    total      : { type: Number, required: [true, 'Total is required'], min: 0 },
+    date         : { type: Date, default: Date.now(), min: Date.now() },
+    total        : { type: Number, required: [true, 'Total is required'], min: 0 },
+    roomPrice    : { type: Number, required: [true, 'Room price is required'], min: 0 },
+    hoursStay    : { type: Number, required: [true, 'Hours stay is required'], min: 0 },
+    servicesPrice: { type: Number, required: [true, 'Total is required'], min: 0 },
     reservation: {
         _id          : { type: mongoose.Schema.Types.ObjectId, unique: true },
         user         : { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: [true, 'User is required'] },

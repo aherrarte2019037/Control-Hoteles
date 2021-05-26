@@ -68,7 +68,6 @@ export default class AuthMiddleware {
 
     static isHotelAdmin( req, res, next ) {
         Passport.authenticate( 'authorize_user', {session: false}, (error, user, message) =>{
-
             if(error || !user || user.role !== 'hotel_admin' ) {
                 res.status(500).send('Unauthorized');
         

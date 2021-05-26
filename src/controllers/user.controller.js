@@ -81,6 +81,28 @@ export default class UserController {
         }
     }
 
+    static async getBillById( req, res ) {
+        try {
+            const id = req.params.id;
+            const response = await UserService.getBillById( id );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
+    static async getBillsByUser( req, res ) {
+        try {
+            const user = req.body.user._id;
+            const response = await UserService.getBillsByUser( user );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
     static async getAdminHotelUnassigned( req, res ) {
         try {
             const response = await UserService.getAdminHotelUnassigned();

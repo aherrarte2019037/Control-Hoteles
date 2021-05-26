@@ -45,6 +45,22 @@ export default class UserService {
 
         return users;
     }
+    
+    static async getBillById( bill ) {
+        const billFound = await BillModel.findById( bill );
+        if( !billFound ) return { error: 'Bill not found' };
+
+        return billFound;
+    }
+
+    static async getBillsByUser( user ) {
+        const id = mongoose.Types.ObjectId( mongoose.isValidObjectId(user)? user:'000000000000' );
+
+        const billsFound = await BillModel.find({ 'reservation.user': id });
+        if( !user || billsFound.length ) return { error: 'Bills or user not found' };
+
+        return billsFound;
+    }
 
     static async getOneByRole( user, role ) {
         const id = mongoose.Types.ObjectId( mongoose.isValidObjectId(user)? user:'000000000000' );
@@ -98,20 +114,22 @@ export default class UserService {
     static async addBill( user, reservation ) {
         reservation = mongoose.Types.ObjectId( mongoose.isValidObjectId(reservation)? reservation:'000000000000' );
         user = mongoose.Types.ObjectId( mongoose.isValidObjectId(user)? user:'000000000000' );
+        const reservationsFound = await RoomModel.findOne({ $and: [{ 'reservations._id': reservation }, { 'reservations.user': user }] }, 'reservations pricePerHour').populate('reservations.services._id')
+        const existsReservation = reservationsFound?.reservations.find( r => r.user.toString() === user.toString() && r._id.toString() === reservation.toString() );
+        if( !reservationsFound || !existsReservation ) return { added: false, error: 'Reservation or user not found' };
 
-        const { reservations, pricePerHour } = await RoomModel.findOne({ $and: [{ 'reservations._id': reservation }, { 'reservations.user': user }] }, 'reservations pricePerHour').populate('reservations.services._id')
-        const existsReservation = reservations?.find( r => r.user = user );
-        if( !reservations || !existsReservation ) return { added: false, error: 'Reservation or user not found' };
+        existsReservation.invoiced = true;
+        await reservationsFound.save();
 
         const servicesInfo = existsReservation.services.map( s => {
             return { quantity: s.quantity, price: s._id.price }
         });
-        const total = getTotal( pricePerHour, existsReservation, servicesInfo );
+        const total = getTotal( reservationsFound.pricePerHour, existsReservation, servicesInfo, true );
 
-        const bill = await BillModel.create({ _id: existsReservation._id, total: total, reservation: existsReservation });
+        const bill = await BillModel.create({ _id: existsReservation._id, total: total.total, roomPrice: total.roomPrice, hoursStay: total.hoursStay, servicesPrice: total.servicesPrice, reservation: existsReservation });
         await bill.populate('reservation.services._id', '-description -__v').execPopulate();
 
-        return { added: true, bill };
+        return { added: true, existsReservation };
     }
 
     static async getTotalPriceReservation( user, reservation ) {

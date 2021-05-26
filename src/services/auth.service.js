@@ -25,7 +25,6 @@ Passport.use( 'authenticate_user', new Strategy( AuthFields, async(email, passwo
         const user = await UserModel.findOne({ email: email });
         if( !user ) return done(null, false, { logged: false, error: 'Email unregistered' });
         if( !await user.validPassword(password) ) return done(null, false, { logged: false, error: 'Wrong email or password' });
-
         return done(null, user, { logged: 'true', item: user, jwt: getUserToken(user) });
 
     } catch(error) {
@@ -34,9 +33,7 @@ Passport.use( 'authenticate_user', new Strategy( AuthFields, async(email, passwo
 
 }));
 
-
 Passport.use( 'authorize_user', new PassportJwt.Strategy( Options, async(jwtPayload, done) =>{
-
     try {
         const user = await UserModel.findById( jwtPayload.sub );
         user.password = undefined;
@@ -51,6 +48,7 @@ Passport.use( 'authorize_user', new PassportJwt.Strategy( Options, async(jwtPayl
 
 function getUserToken( user ) {
     return Jwt.sign({
-        sub: user.id
+        sub : user.id,
+        role: user.role
     }, SECRET);
 };

@@ -10,6 +10,7 @@ const RoomSchema = mongoose.Schema({
         entryDateTime: { type: Date, required: [true, 'Entry DateTime is required'] },
         exitDateTime : { type: Date, required: [true, 'Exit DateTime is required'] },
         cancelled    : { type: Boolean, default: false},
+        invoiced     : { type: Boolean, default: false},
         services     : [{ 
             _id      : { type: mongoose.Schema.Types.ObjectId, ref: 'Service' },
             quantity : { type: Number, min: 1, default: 1 }

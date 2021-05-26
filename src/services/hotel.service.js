@@ -84,10 +84,23 @@ export default class HotelService {
 
     static async getReservations( hotelAdmin ) {
         const id = mongoose.Types.ObjectId( mongoose.isValidObjectId(hotelAdmin.id)? hotelAdmin.id:'000000000000' );
-        const hotel = await HotelModel.findOne({ admin: id }).populate('rooms');
+        const hotel = await HotelModel.findOne({ admin: id }).populate({
+            path: 'rooms',
+            populate: {
+              path: 'reservations.user'
+            }
+          })
         if( !hotel || hotel.length === 0 ) return { error: 'Hotel reservations not found' };
 
-        return hotel.rooms
+        let result = [];
+        
+        hotel.rooms.forEach( room =>  room.reservations.map(
+            reservation => {
+                result.push( { hotel: { name: hotel.name }, room: { _id: room._id, name: room.name }, reservation } )
+            }
+        ));
+
+        return result;
     }
 
     static async getReservationsByHotel( hotel ) {
