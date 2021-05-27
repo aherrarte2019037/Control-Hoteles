@@ -240,4 +240,17 @@ export default class HotelController {
         }
     }
 
+    static async deleteHotel( req, res ) {
+        try {
+            const hotel = req.params.id;
+            const user = req.body.user;
+
+            const response = await HotelService.deleteHotel( hotel, user );
+            res.status(200).send(response);
+
+        } catch (error) {
+            res.status(500).send({ error: error.message? error.message : error });
+        }
+    }
+
 }

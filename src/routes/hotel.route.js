@@ -46,4 +46,6 @@ router.post('/:hotel/room/:room/reservation', AuthMiddleware.isClient, HotelCont
 
 router.post('/room/availability', AuthMiddleware.isHotelAdmin, HotelController.roomAvailability);
 
+router.delete('/:id', AuthMiddleware.isAppAdmin, HotelController.deleteHotel)
+
 export default router;

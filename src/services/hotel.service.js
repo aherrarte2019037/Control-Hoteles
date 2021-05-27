@@ -318,6 +318,12 @@ export default class HotelService {
         return reservationDeleted;
     }
 
+    static async deleteHotel( hotel, user ) {
+        const hotelDeleted = await HotelModel.findByIdAndDelete( hotel );
+
+        return { deleted: true, item: reservationDeleted };
+    }
+
 }
 
 function compareReservationsDate( entryDateTime, exitDateTime, rooms ) {
